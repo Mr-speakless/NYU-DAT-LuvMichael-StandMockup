@@ -15,7 +15,7 @@ export function surfaceAt(x, z) {
   const n = ZONES.name
   if (inRect(x, z, n.cx, n.cz, n.w, n.d)) return SURF + BOARD_H
   for (const k of ['status', 'comm']) if (inRect(x, z, ZONES[k].cx, ZONES[k].cz, ZONES[k].w, ZONES[k].d)) return SURF + PANEL_H
-  if (inRect(x, z, STRIP.cx, STRIP.cz, STRIP.w, STRIP.d)) return SURF + STRIP.h
+  if (inRect(x, z, STRIP.cx, STRIP.cz, STRIP.w, STRIP.d)) return SURF + BOARD_H
   if (inRect(x, z, BINDER.cx, BINDER.cz, BINDER.baseW, BINDER.baseD)) return SURF + BINDER.baseH + 0.12
   return SURF
 }

@@ -3,8 +3,7 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { MARKERS, STAND, SPREADS } from './config.js'
 import { buildScene } from './scene.js'
-import { createWhiteboard } from './whiteboard.js'
-import { createStrip } from './strip.js'
+import { createNameBoard, createCountBoard } from './whiteboard.js'
 import { createBinder } from './binder.js'
 import { createPanels } from './panels.js'
 import { createTokens } from './tokens.js'
@@ -58,8 +57,10 @@ const ui = {
 const pageNames = SPREADS.map((sp) => sp.name)
 
 createPanels(stand.content)
-const board = createWhiteboard(stand.content)
-const strip = createStrip(stand.content)
+const nameBoard = createNameBoard(stand.content)
+const countBoard = createCountBoard(stand.content)
+const boards = [nameBoard, countBoard]
+let activeBoard = null
 const binder = createBinder(stand.content, (s) => (ui.page.textContent = pageNames[s] ?? ''))
 const tokens = createTokens(scene, stand, (st) => {
   const on = Object.entries(st.status).filter(([, v]) => v).map(([k]) => k[0].toUpperCase() + k.slice(1))
@@ -71,7 +72,7 @@ const tokens = createTokens(scene, stand, (st) => {
     : 'none placed'
 })
 
-const pickables = [board.mesh, strip.mesh, ...binder.pickables, ...tokens.pickables]
+const pickables = [nameBoard.mesh, countBoard.mesh, ...binder.pickables, ...tokens.pickables]
 
 // ── marker colours + cursor ────────────────────────────────
 let markerColor = MARKERS[0].color
@@ -88,18 +89,18 @@ MARKERS.forEach((m, i) => {
   b.title = m.name
   b.onclick = () => {
     markerColor = m.color
-    board.setColor(m.color)
+    boards.forEach((b) => b.setColor(m.color))
     cursorMarker = markerCursor(m.color)
     swWrap.querySelectorAll('.swatch').forEach((x) => x.classList.remove('on'))
     b.classList.add('on')
   }
   swWrap.appendChild(b)
 })
-board.setColor(markerColor)
-document.getElementById('btn-erase').onclick = () => board.erase()
+boards.forEach((b) => b.setColor(markerColor))
+document.getElementById('btn-erase').onclick = () => nameBoard.erase()
+document.getElementById('btn-erase-count').onclick = () => countBoard.erase()
 document.getElementById('btn-reset').onclick = () => {
-  board.erase()
-  strip.clear()
+  boards.forEach((b) => b.erase())
   binder.reset()
   tokens.reset()
 }
@@ -141,9 +142,8 @@ canvas.addEventListener('pointerdown', (e) => {
   canvas.setPointerCapture(e.pointerId)
   if (ud.kind === 'board') {
     mode = 'draw'
-    board.begin(hit.uv)
-  } else if (ud.kind === 'strip') {
-    strip.toggle(hit.uv)
+    activeBoard = ud.board
+    activeBoard.begin(hit.uv)
   } else if (ud.kind === 'leaf') {
     mode = 'page'
     binder.press(ud.leaf, raycaster, e) // click flips; press-and-drag turns it by hand
@@ -159,8 +159,8 @@ canvas.addEventListener('pointerdown', (e) => {
 canvas.addEventListener('pointermove', (e) => {
   setRay(e)
   if (mode === 'draw') {
-    const h = raycaster.intersectObject(board.mesh, false)[0]
-    board.move(h ? h.uv : null)
+    const h = raycaster.intersectObject(activeBoard.mesh, false)[0]
+    activeBoard.move(h ? h.uv : null)
     return
   }
   if (mode === 'drag') {
@@ -175,11 +175,11 @@ canvas.addEventListener('pointermove', (e) => {
   const hit = firstHit()
   const k = hit?.object.userData.kind
   canvas.style.cursor =
-    k === 'board' || k === 'strip' ? cursorMarker : k === 'drag' ? 'grab' : k === 'leaf' ? 'grab' : k === 'tab' ? 'pointer' : ''
+    k === 'board' ? cursorMarker : k === 'drag' ? 'grab' : k === 'leaf' ? 'grab' : k === 'tab' ? 'pointer' : ''
 })
 
 const release = (e) => {
-  if (mode === 'draw') board.end()
+  if (mode === 'draw') activeBoard.end()
   if (mode === 'drag') tokens.end()
   if (mode === 'page') binder.release()
   mode = null
@@ -227,7 +227,6 @@ renderer.setAnimationLoop(() => {
   clock.update()
   const dt = Math.min(0.05, clock.getDelta())
   binder.update(dt)
-  strip.update(dt)
   tokens.update(dt)
   if (tween) {
     tween.t = Math.min(1, tween.t + dt / 0.7)
@@ -243,4 +242,4 @@ renderer.setAnimationLoop(() => {
   renderer.render(scene, camera)
 })
 
-window.__mock = { scene, camera, controls, board, strip, binder, tokens, renderer }
+window.__mock = { scene, camera, controls, nameBoard, countBoard, binder, tokens, renderer }

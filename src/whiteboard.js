@@ -1,60 +1,45 @@
 import * as THREE from 'three'
-import { ZONES, SURF, BOARD_H, COLORS, MARKERS } from './config.js'
+import { ZONES, STRIP, SURF, BOARD_H, COLORS, MARKERS } from './config.js'
 import { mkCanvas, rr, canvasTex, roundedSlab, std, decal, FONT } from './gfx.js'
 
-const PX = 220 // canvas pixels per scene unit
-
-export function createWhiteboard(scene) {
-  const z = ZONES.name
-  const frame = new THREE.Mesh(roundedSlab(z.w, z.d, BOARD_H, 0.3), std(COLORS.boardFrame, { roughness: 0.5 }))
-  frame.position.set(z.cx, SURF, z.cz)
+// A real-feeling dry-erase board: a frame, a white glossy writing surface, and
+// strokes you draw yourself. Nothing is animated or automatic.
+function createBoard(parent, { cx, cz, w, d, inset, px, radius, paint }) {
+  const frame = new THREE.Mesh(roundedSlab(w, d, BOARD_H, 0.3), std(COLORS.boardFrame, { roughness: 0.5 }))
+  frame.position.set(cx, SURF, cz)
   frame.castShadow = frame.receiveShadow = true
-  scene.add(frame)
+  parent.add(frame)
 
-  const inset = 0.15
-  const sw = z.w - inset * 2
-  const sd = z.d - inset * 2
-  const W = Math.round(sw * PX)
-  const H = Math.round(sd * PX)
+  const sw = w - inset * 2
+  const sd = d - inset * 2
+  const W = Math.round(sw * px)
+  const H = Math.round(sd * px)
   const [display, dctx] = mkCanvas(W, H)
   const [strokes, sctx] = mkCanvas(W, H)
   const tex = canvasTex(display)
   const surface = decal(sw, sd, tex, { roughness: 0.22 })
   surface.position.y = BOARD_H + 0.003
-  surface.userData.kind = 'board'
   frame.add(surface)
 
-  const state = { color: MARKERS[0].color, width: 13, last: null, drawing: false, dirty: false }
+  const state = { color: MARKERS[0].color, width: 0.06 * px, last: null, drawing: false }
 
-  function paint() {
+  function redraw() {
     dctx.clearRect(0, 0, W, H)
-    rr(dctx, 0, 0, W, H, 0.17 * PX)
+    rr(dctx, 0, 0, W, H, radius * px)
     dctx.fillStyle = '#FCFEFF'
     dctx.fill()
     dctx.save()
     dctx.clip()
-    // faint caption + underline guide, the marker covers them
-    dctx.fillStyle = '#C9D4E8'
-    dctx.font = `700 ${0.2 * PX}px ${FONT}`
-    dctx.textBaseline = 'top'
-    dctx.fillText('My name', 0.3 * PX, 0.16 * PX)
-    dctx.strokeStyle = '#E4EAF6'
-    dctx.setLineDash([10, 14])
-    dctx.lineWidth = 4
-    dctx.beginPath()
-    dctx.moveTo(0.3 * PX, H - 0.28 * PX)
-    dctx.lineTo(W - 0.3 * PX, H - 0.28 * PX)
-    dctx.stroke()
-    dctx.setLineDash([])
+    paint(dctx, W, H, px)
     dctx.drawImage(strokes, 0, 0)
     dctx.restore()
     tex.needsUpdate = true
   }
-  paint()
+  redraw()
 
   const toPx = (uv) => ({ x: uv.x * W, y: (1 - uv.y) * H })
 
-  return {
+  const api = {
     mesh: surface,
     setColor(c) {
       state.color = c
@@ -67,7 +52,7 @@ export function createWhiteboard(scene) {
       sctx.beginPath()
       sctx.arc(p.x, p.y, state.width / 2, 0, Math.PI * 2)
       sctx.fill()
-      paint()
+      redraw()
     },
     move(uv) {
       if (!state.drawing) return
@@ -91,7 +76,7 @@ export function createWhiteboard(scene) {
       sctx.lineTo(p.x, p.y)
       sctx.stroke()
       state.last = p
-      paint()
+      redraw()
     },
     end() {
       state.drawing = false
@@ -99,10 +84,58 @@ export function createWhiteboard(scene) {
     },
     erase() {
       sctx.clearRect(0, 0, W, H)
-      paint()
-    },
-    get drawing() {
-      return state.drawing
+      redraw()
     },
   }
+  surface.userData.kind = 'board'
+  surface.userData.board = api
+  return api
+}
+
+// Top board: "My name"
+export function createNameBoard(parent) {
+  const z = ZONES.name
+  return createBoard(parent, {
+    cx: z.cx,
+    cz: z.cz,
+    w: z.w,
+    d: z.d,
+    inset: 0.15,
+    px: 220,
+    radius: 0.17,
+    paint(ctx, W, H, px) {
+      ctx.fillStyle = '#C9D4E8'
+      ctx.font = `700 ${0.2 * px}px ${FONT}`
+      ctx.textBaseline = 'top'
+      ctx.fillText('My name', 0.3 * px, 0.16 * px)
+      ctx.strokeStyle = '#E4EAF6'
+      ctx.setLineDash([10, 14])
+      ctx.lineWidth = 4
+      ctx.beginPath()
+      ctx.moveTo(0.3 * px, H - 0.28 * px)
+      ctx.lineTo(W - 0.3 * px, H - 0.28 * px)
+      ctx.stroke()
+      ctx.setLineDash([])
+    },
+  })
+}
+
+// Left board: just the numbers 1–10 printed down it. You tick them by hand.
+export function createCountBoard(parent) {
+  return createBoard(parent, {
+    cx: STRIP.cx,
+    cz: STRIP.cz,
+    w: STRIP.w,
+    d: STRIP.d,
+    inset: 0.08,
+    px: 220,
+    radius: 0.22,
+    paint(ctx, W, H, px) {
+      ctx.fillStyle = '#9FAAC4'
+      ctx.font = `800 ${0.3 * px}px ${FONT}`
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      for (let i = 0; i < STRIP.count; i++) ctx.fillText(String(i + 1), W / 2, ((i + 0.5) * H) / STRIP.count)
+    },
+  })
 }
