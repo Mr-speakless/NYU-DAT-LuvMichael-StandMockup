@@ -21,6 +21,16 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #ffe6d8; }
   border: 1px solid var(--line); border-radius: 22px; box-shadow: 0 8px 30px rgba(120, 80, 60, 0.12);
 }
 .hud-panel section + section { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line); }
+h2 { margin: 0; font-size: 13px; letter-spacing: 0.04em; }
+.panel-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.panel-body { display: grid; grid-template-rows: 1fr; margin-top: 12px; transition: grid-template-rows 0.25s ease, margin 0.25s ease; }
+.panel-inner { overflow: hidden; min-height: 0; }
+.chev { width: 28px; height: 28px; padding: 0; display: grid; place-items: center; border-radius: 50%; }
+.chev svg { transition: transform 0.25s ease; }
+.hud-panel { transition: width 0.25s ease, padding 0.25s ease; }
+.hud-panel.collapsed { width: 138px; padding: 8px 8px 8px 16px; border-radius: 999px; }
+.hud-panel.collapsed .panel-body { grid-template-rows: 0fr; margin-top: 0; }
+.hud-panel.collapsed .chev svg { transform: rotate(180deg); }
 h3 { margin: 0 0 8px; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--soft); }
 .swatches { display: flex; gap: 10px; margin-bottom: 10px; }
 .swatch {

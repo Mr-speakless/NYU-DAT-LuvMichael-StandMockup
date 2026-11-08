@@ -74,6 +74,25 @@ const tokens = createTokens(scene, stand, (st) => {
 
 const pickables = [nameBoard.mesh, countBoard.mesh, ...binder.pickables, ...tokens.pickables]
 
+// ── collapsible info panel ─────────────────────────────────
+const panel = document.getElementById('panel')
+const panelBtn = document.getElementById('panel-toggle')
+function setPanel(collapsed) {
+  panel.classList.toggle('collapsed', collapsed)
+  panelBtn.setAttribute('aria-expanded', String(!collapsed))
+  panelBtn.setAttribute('aria-label', collapsed ? 'Expand panel' : 'Collapse panel')
+  try {
+    localStorage.setItem('panelCollapsed', collapsed ? '1' : '0')
+  } catch {}
+}
+try {
+  if (localStorage.getItem('panelCollapsed') === '1') setPanel(true)
+} catch {}
+panelBtn.onclick = () => setPanel(!panel.classList.contains('collapsed'))
+window.addEventListener('keydown', (e) => {
+  if (e.key.toLowerCase() === 'h' && !e.metaKey && !e.ctrlKey) setPanel(!panel.classList.contains('collapsed'))
+})
+
 // ── marker colours + cursor ────────────────────────────────
 let markerColor = MARKERS[0].color
 function markerCursor(color) {

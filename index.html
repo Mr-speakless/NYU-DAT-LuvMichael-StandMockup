@@ -14,7 +14,14 @@
       <span>interactive mockup v0</span>
     </header>
 
-    <aside class="hud hud-panel">
+    <aside class="hud hud-panel" id="panel">
+      <div class="panel-head">
+        <h2>Controls</h2>
+        <button id="panel-toggle" class="ghost chev" aria-expanded="true" aria-label="Collapse panel" title="Collapse / expand (H)">
+          <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M3 10l5-5 5 5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+      <div class="panel-body"><div class="panel-inner">
       <section>
         <h3>Marker</h3>
         <div id="swatches" class="swatches"></div>
@@ -41,6 +48,7 @@
           <dt>Feelings</dt><dd id="r-feel">none placed</dd>
         </dl>
       </section>
+      </div></div>
     </aside>
 
     <footer class="hud hud-hint">
