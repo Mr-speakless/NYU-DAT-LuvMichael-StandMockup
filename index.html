@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Step Station · Mockup</title>
+  </head>
+  <body>
+    <canvas id="stage"></canvas>
+
+    <header class="hud hud-title">
+      <strong>Step Station</strong>
+      <span>interactive mockup v0</span>
+    </header>
+
+    <aside class="hud hud-panel">
+      <section>
+        <h3>Marker</h3>
+        <div id="swatches" class="swatches"></div>
+        <div class="row">
+          <button id="btn-erase">Erase name</button>
+          <button id="btn-reset" class="ghost">Reset all</button>
+        </div>
+      </section>
+      <section>
+        <h3>View</h3>
+        <div class="row">
+          <button id="view-default" class="ghost">Default</button>
+          <button id="view-face" class="ghost">Face the board</button>
+        </div>
+      </section>
+      <section>
+        <h3>Now showing</h3>
+        <dl id="readout">
+          <dt>Page</dt><dd id="r-page">Cover</dd>
+          <dt>Status</dt><dd id="r-status">none</dd>
+          <dt>Feelings</dt><dd id="r-feel">none placed</dd>
+        </dl>
+      </section>
+    </aside>
+
+    <footer class="hud hud-hint">
+      Write on the whiteboard · tick the count strip · click tabs or pages to flip · drag cards and buttons into place · drag empty space to look around · scroll to zoom
+    </footer>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

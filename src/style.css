@@ -1,0 +1,53 @@
+:root {
+  --ink: #33415c;
+  --soft: #6b7794;
+  --panel: rgba(255, 255, 255, 0.78);
+  --line: rgba(51, 65, 92, 0.12);
+  --accent: #5cc3ff;
+  font-family: ui-rounded, 'SF Pro Rounded', 'Arial Rounded MT Bold', 'Nunito', system-ui, sans-serif;
+  color: var(--ink);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: #ffe6d8; }
+#stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+
+.hud { position: fixed; z-index: 2; pointer-events: none; }
+.hud-title { top: 18px; left: 22px; display: flex; flex-direction: column; gap: 2px; font-size: 20px; }
+.hud-title span { font-size: 12px; color: var(--soft); letter-spacing: 0.04em; }
+
+.hud-panel {
+  top: 18px; right: 18px; width: 230px; padding: 14px 16px; pointer-events: auto;
+  background: var(--panel); backdrop-filter: blur(12px);
+  border: 1px solid var(--line); border-radius: 22px; box-shadow: 0 8px 30px rgba(120, 80, 60, 0.12);
+}
+.hud-panel section + section { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line); }
+h3 { margin: 0 0 8px; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--soft); }
+.swatches { display: flex; gap: 10px; margin-bottom: 10px; }
+.swatch {
+  width: 34px; height: 34px; border-radius: 50%; border: 3px solid #fff; cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2); transition: transform 0.12s;
+}
+.swatch:hover { transform: scale(1.1); }
+.swatch.on { outline: 3px solid var(--ink); outline-offset: 2px; }
+.row { display: flex; gap: 8px; }
+button {
+  font: inherit; font-size: 13px; font-weight: 700; padding: 8px 12px; border-radius: 999px; border: 0; cursor: pointer;
+  color: #fff; background: var(--ink); transition: transform 0.1s, opacity 0.1s;
+}
+button:hover { transform: translateY(-1px); }
+button:active { transform: translateY(1px); }
+button.ghost { background: rgba(51, 65, 92, 0.1); color: var(--ink); }
+
+dl { margin: 0; display: grid; grid-template-columns: 62px 1fr; row-gap: 6px; font-size: 13px; }
+dt { color: var(--soft); }
+dd { margin: 0; font-weight: 700; }
+.dots { letter-spacing: 1px; font-size: 11px; color: var(--soft); }
+
+.hud-hint {
+  left: 18px; bottom: 14px; max-width: 270px; text-align: left; line-height: 1.45;
+  font-size: 11px; color: var(--soft); background: rgba(255, 255, 255, 0.55); padding: 8px 14px; border-radius: 16px;
+}
+@media (max-width: 700px) {
+  .hud-panel { top: auto; bottom: 56px; right: 10px; left: 10px; width: auto; }
+  .hud-title { top: 10px; left: 12px; }
+}
