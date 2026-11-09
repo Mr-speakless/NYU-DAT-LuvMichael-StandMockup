@@ -7,6 +7,7 @@ import { createNameBoard, createCountBoard } from './whiteboard.js'
 import { createBinder } from './binder.js'
 import { createPanels } from './panels.js'
 import { createTokens } from './tokens.js'
+import { createSpec } from './spec.js'
 
 const canvas = document.getElementById('stage')
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true })
@@ -70,6 +71,15 @@ const tokens = createTokens(scene, stand, (st) => {
         .map((f) => `${f.label} <span class="dots">${'●'.repeat(f.level)}${'○'.repeat(5 - f.level)}</span>`)
         .join('<br>')
     : 'none placed'
+})
+
+// "Build spec" view: locks the camera face-on and overlays sizes + materials
+const spec = createSpec({
+  camera,
+  controls,
+  content: stand.content,
+  onOpen: () => (tween = null),
+  onClosed: () => resize(),
 })
 
 const pickables = [nameBoard.mesh, countBoard.mesh, ...binder.pickables, ...tokens.pickables]
@@ -143,12 +153,12 @@ window.addEventListener(
     if (e.target !== canvas) return
     if (e.button === 0) {
       setRay(e)
-      controls.enabled = !firstHit()
+      controls.enabled = !spec.locked && !firstHit()
     }
   },
   true
 )
-const reenable = () => (controls.enabled = true)
+const reenable = () => (controls.enabled = !spec.locked)
 window.addEventListener('pointerup', reenable)
 window.addEventListener('pointercancel', reenable)
 
@@ -222,8 +232,8 @@ function goTo(v) {
   const sph = new THREE.Spherical().setFromVector3(camera.position.clone().sub(TARGET))
   tween = { t: 0, from: sph, to: v }
 }
-document.getElementById('view-default').onclick = () => goTo(VIEWS.default)
-document.getElementById('view-face').onclick = () => goTo(VIEWS.face)
+document.getElementById('view-default').onclick = () => !spec.locked && goTo(VIEWS.default)
+document.getElementById('view-face').onclick = () => !spec.locked && goTo(VIEWS.face)
 
 // ── sizing: keep the whole table in view on narrow windows ──
 function resize() {
@@ -231,6 +241,10 @@ function resize() {
   const h = window.innerHeight
   renderer.setSize(w, h, false)
   camera.aspect = w / h
+  if (spec.locked) {
+    spec.resize()
+    return
+  }
   const dist = camera.position.distanceTo(controls.target)
   const needHalfW = 12.2
   const fov = THREE.MathUtils.radToDeg(2 * Math.atan(needHalfW / camera.aspect / dist))
@@ -257,8 +271,9 @@ renderer.setAnimationLoop(() => {
       .add(TARGET)
     if (tween.t >= 1) tween = null
   }
-  controls.update()
+  spec.update(dt)
+  if (!spec.locked) controls.update()
   renderer.render(scene, camera)
 })
 
-window.__mock = { scene, camera, controls, nameBoard, countBoard, binder, tokens, renderer }
+window.__mock = { scene, camera, controls, nameBoard, countBoard, binder, tokens, renderer, spec }

@@ -3,9 +3,11 @@ import { SURF, PANEL_H, BOARD_H, ZONES, STRIP, BINDER, TRAY, STAND, STATUS_CARDS
 import { mkCanvas, rr, canvasTex, roundedSlab, std, drawFace, drawCardIcon, FONT } from './gfx.js'
 import { slotCenter, cellCenter, commBounds } from './panels.js'
 
-const R = 0.24 // sticker radius
+// Feeling stickers are upright bars: as wide as a lane, tall enough to pinch.
+// They may overhang their cell a little.
+const STICK = { w: 0.56, d: 1.04, h: 0.14 }
 // A status card is exactly as big as the status area: one card fills it.
-const CARD = { w: ZONES.status.w - 0.1, d: ZONES.status.d - 0.1, h: 0.12 }
+export const CARD ={ w: ZONES.status.w - 0.1, d: ZONES.status.d - 0.1, h: 0.12 }
 const PX = 200
 
 const inRect = (x, z, cx, cz, w, d, m = 0) => Math.abs(x - cx) <= w / 2 + m && Math.abs(z - cz) <= d / 2 + m
@@ -48,21 +50,29 @@ function cardDecal(card) {
 }
 
 function stickerTex(f) {
-  const s = 256
-  const [c, ctx] = mkCanvas(s, s)
-  const g = ctx.createRadialGradient(s * 0.4, s * 0.35, 10, s / 2, s / 2, s / 2)
+  const w = Math.round(STICK.w * PX)
+  const h = Math.round(STICK.d * PX)
+  const [c, ctx] = mkCanvas(w, h)
+  rr(ctx, 0, 0, w, h, 0.2 * PX)
+  ctx.fillStyle = f.color
+  ctx.fill()
+  const g = ctx.createRadialGradient(w * 0.35, h * 0.2, 6, w / 2, h / 2, h * 0.7)
   g.addColorStop(0, '#ffffff55')
   g.addColorStop(1, '#ffffff00')
-  ctx.fillStyle = f.color
-  ctx.fillRect(0, 0, s, s)
   ctx.fillStyle = g
-  ctx.fillRect(0, 0, s, s)
+  ctx.fill()
+  rr(ctx, 7, 7, w - 14, h - 14, 0.15 * PX)
   ctx.strokeStyle = 'rgba(255,255,255,0.55)'
-  ctx.lineWidth = 7
-  ctx.beginPath()
-  ctx.arc(s / 2, s / 2, s * 0.43, 0, Math.PI * 2)
+  ctx.lineWidth = 4
   ctx.stroke()
-  drawFace(ctx, f.id, s / 2, s / 2 + 6, s * 0.32)
+  drawFace(ctx, f.id, w / 2, h * 0.38, w * 0.36)
+  ctx.fillStyle = 'rgba(255,255,255,0.95)'
+  ctx.font = `900 ${0.115 * PX}px ${FONT}`
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.shadowColor = 'rgba(0,0,0,0.25)'
+  ctx.shadowBlur = 4
+  ctx.fillText(f.label, w / 2, h * 0.8)
   return canvasTex(c)
 }
 
@@ -95,24 +105,13 @@ export function createTokens(scene, stand, onChange) {
     items.push(item)
   })
 
-  // feeling stickers (button-like)
-  const profile = [
-    [0, 0],
-    [R - 0.06, 0],
-    [R - 0.02, 0.012],
-    [R, 0.05],
-    [R, 0.095],
-    [R - 0.03, 0.13],
-    [R - 0.08, 0.145],
-    [0, 0.145],
-  ].map(([x, y]) => new THREE.Vector2(x, y))
-  const lathe = new THREE.LatheGeometry(profile, 40)
+  // feeling stickers: upright bars
   FEELINGS.forEach((f, i) => {
     const g = new THREE.Group()
-    g.add(new THREE.Mesh(lathe, std(f.color, { roughness: 0.3 })))
-    const cap = new THREE.Mesh(new THREE.CircleGeometry(R - 0.065, 48).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ map: stickerTex(f), roughness: 0.25 }))
-    cap.position.y = 0.1465
-    g.add(cap)
+    g.add(new THREE.Mesh(roundedSlab(STICK.w, STICK.d, STICK.h, 0.2), std(f.color, { roughness: 0.35 })))
+    const top = new THREE.Mesh(new THREE.PlaneGeometry(STICK.w - 0.04, STICK.d - 0.04).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ map: stickerTex(f), roughness: 0.3, transparent: true }))
+    top.position.y = STICK.h + 0.003
+    g.add(top)
     const item = { kind: 'sticker', id: f.id, label: f.label, index: i, group: g, home: f.home, target: { mode: 'desk', x: 0, y: 0, z: 0, ry: 0 }, level: 0, dragging: false, scale: 1 }
     mark(g, item)
     scene.add(g)
