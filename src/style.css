@@ -67,8 +67,8 @@ dd { margin: 0; font-weight: 700; }
 body.spec-open .hud-panel, body.spec-open .hud-hint, body.spec-open .spec-open { opacity: 0; pointer-events: none; }
 .hud-panel, .hud-hint, .spec-open { transition: opacity 0.25s ease; }
 
-#spec { position: fixed; inset: 0; z-index: 3; pointer-events: none; opacity: 0; transition: opacity 0.35s ease; }
-#spec.on { opacity: 1; }
+#spec { position: fixed; inset: 0; z-index: 3; pointer-events: none; opacity: 0; visibility: hidden; transition: opacity 0.35s ease, visibility 0s 0.35s; }
+#spec.on { opacity: 1; visibility: visible; transition: opacity 0.35s ease, visibility 0s; }
 #spec-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 #spec-pins { position: absolute; inset: 0; }
 
